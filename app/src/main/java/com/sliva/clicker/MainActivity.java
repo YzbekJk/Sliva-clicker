@@ -15,11 +15,11 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         Window w = getWindow();
-        w.setStatusBarColor(0xFF1B1033);
-        w.setNavigationBarColor(0xFF3A1C5E);
+        w.setStatusBarColor(0xFF0D0D0D);
+        w.setNavigationBarColor(0xFF0D0D0D);
 
         webView = new WebView(this);
-        webView.setBackgroundColor(0xFF1B1033);
+        webView.setBackgroundColor(0xFF0D0D0D);
         webView.setOverScrollMode(WebView.OVER_SCROLL_NEVER);
 
         WebSettings s = webView.getSettings();
@@ -27,6 +27,7 @@ public class MainActivity extends Activity {
         s.setDomStorageEnabled(true); // нужен для localStorage (сохранения игры)
         s.setAllowFileAccess(true);
         s.setAllowContentAccess(false);
+        s.setMediaPlaybackRequiresUserGesture(false); // звук мемов
 
         setContentView(webView);
 

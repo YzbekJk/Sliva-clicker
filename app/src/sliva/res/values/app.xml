@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Слива кликер</string>
+    <color name="ic_launcher_background">#3A1C5E</color>
+    <color name="app_bg">#1B1033</color>
+    <color name="app_nav">#3A1C5E</color>
+</resources>

@@ -15,11 +15,11 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         Window w = getWindow();
-        w.setStatusBarColor(0xFF0D0D0D);
-        w.setNavigationBarColor(0xFF0D0D0D);
+        w.setStatusBarColor(getResources().getColor(R.color.app_bg));
+        w.setNavigationBarColor(getResources().getColor(R.color.app_nav));
 
         webView = new WebView(this);
-        webView.setBackgroundColor(0xFF0D0D0D);
+        webView.setBackgroundColor(getResources().getColor(R.color.app_bg));
         webView.setOverScrollMode(WebView.OVER_SCROLL_NEVER);
 
         WebSettings s = webView.getSettings();

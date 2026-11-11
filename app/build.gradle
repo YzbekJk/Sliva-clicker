@@ -7,17 +7,13 @@ android {
     compileSdk 34
 
     defaultConfig {
-        applicationId 'com.sliva.clicker'
         minSdk 21
         targetSdk 34
         versionCode 1
         versionName '1.0'
     }
 
-    androidResources {
-        noCompress 'mp4', 'jpg'
-    }
-
+    // Постоянный ключ подписи: новые сборки ставятся поверх старых как обновление.
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
@@ -25,6 +21,24 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+    }
+
+    // Два независимых приложения: у каждого свой applicationId, поэтому
+    // установка одного никогда не заменяет другое.
+    flavorDimensions 'app'
+    productFlavors {
+        sliva {
+            dimension 'app'
+            applicationId 'com.sliva.clicker'
+        }
+        kussia {
+            dimension 'app'
+            applicationId 'com.kussia.clicker'
+        }
+    }
+
+    androidResources {
+        noCompress 'mp4', 'jpg'
     }
 
     buildTypes {

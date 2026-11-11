@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Слива кликер</title>
+<style>
+  :root {
+    --bg1: #1b1033;
+    --bg2: #3a1c5e;
+    --card: rgba(255,255,255,.08);
+    --card-hi: rgba(255,255,255,.14);
+    --text: #f6ecff;
+    --muted: #b9a5d6;
+    --accent: #ffb703;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    background: linear-gradient(180deg, var(--bg1), var(--bg2));
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    user-select: none; -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+  #app {
+    height: 100dvh; max-width: 560px; margin: 0 auto;
+    display: flex; flex-direction: column;
+    padding: env(safe-area-inset-top) 14px env(safe-area-inset-bottom);
+  }
+  header { text-align: center; padding: 14px 0 4px; }
+  #count { font-size: 44px; font-weight: 800; line-height: 1; letter-spacing: -1px; }
+  .label { font-size: 15px; color: var(--muted); margin-top: 2px; }
+  #ps { font-size: 14px; color: var(--accent); margin-top: 6px; font-weight: 600; }
+  main { flex: 1 1 auto; min-height: 150px; display: flex; align-items: center; justify-content: center; }
+  #plum {
+    width: min(52vw, 34dvh, 240px); aspect-ratio: 1;
+    border: 0; background: none; padding: 0; cursor: pointer;
+    transition: transform .08s ease-out;
+    filter: drop-shadow(0 14px 22px rgba(0,0,0,.45));
+  }
+  #plum svg { width: 100%; height: 100%; display: block; pointer-events: none; }
+  #plum.hit { transform: scale(.92); }
+  .float {
+    position: fixed; pointer-events: none; z-index: 10;
+    font-weight: 800; font-size: 24px; color: #fff;
+    text-shadow: 0 2px 6px rgba(0,0,0,.6);
+    animation: floatUp .8s ease-out forwards;
+  }
+  @keyframes floatUp {
+    from { opacity: 1; transform: translate(-50%, -50%); }
+    to   { opacity: 0; transform: translate(-50%, -120px); }
+  }
+  #shop {
+    flex: 0 1 44%; overflow-y: auto; padding: 4px 0 8px;
+    display: flex; flex-direction: column; gap: 8px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .up {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    background: var(--card); color: var(--text);
+    border: 1px solid transparent; border-radius: 14px;
+    padding: 10px 12px; text-align: left; font: inherit; cursor: pointer;
+  }
+  .up:active:not(:disabled) { background: var(--card-hi); }
+  .up:disabled { opacity: .45; cursor: default; }
+  .up.can { border-color: rgba(255,183,3,.55); }
+  .ic { font-size: 28px; width: 38px; text-align: center; flex: none; }
+  .info { flex: 1; min-width: 0; }
+  .name { font-weight: 700; font-size: 15px; }
+  .desc { font-size: 12.5px; color: var(--muted); margin-top: 1px; }
+  .right { text-align: right; flex: none; }
+  .cost { font-weight: 800; font-size: 15px; color: var(--accent); }
+  .lv { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  footer { text-align: center; padding: 4px 0 10px; }
+  #reset {
+    background: none; border: 0; color: var(--muted); font: inherit; font-size: 12px;
+    text-decoration: underline; padding: 6px 10px; cursor: pointer;
+  }
+  #toast {
+    position: fixed; left: 50%; top: 14px; transform: translate(-50%, -120%);
+    background: #fff; color: #2b1450; padding: 10px 16px; border-radius: 12px;
+    font-weight: 600; font-size: 14px; z-index: 20; max-width: 90vw; text-align: center;
+    transition: transform .35s ease, opacity .35s ease; box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    opacity: 0; pointer-events: none;
+  }
+  #toast.show { transform: translate(-50%, 0); opacity: 1; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div id="count">0</div>
+    <div class="label">слив</div>
+    <div id="ps">0 в секунду</div>
+  </header>
+
+  <main>
+    <button id="plum" aria-label="Слива">
+      <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="body" cx="36%" cy="30%" r="80%">
+            <stop offset="0" stop-color="#b57bf0"/>
+            <stop offset=".45" stop-color="#7b3fc4"/>
+            <stop offset="1" stop-color="#3b1672"/>
+          </radialGradient>
+          <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#7ed957"/>
+            <stop offset="1" stop-color="#2f8f3a"/>
+          </linearGradient>
+        </defs>
+        <ellipse cx="100" cy="116" rx="72" ry="68" fill="url(#body)"/>
+        <path d="M100 52 C 92 80, 92 120, 100 184" stroke="#2c0f57" stroke-opacity=".45" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <ellipse cx="72" cy="88" rx="20" ry="12" fill="#fff" fill-opacity=".28" transform="rotate(-35 72 88)"/>
+        <path d="M100 52 C 100 38, 106 28, 116 20" stroke="#5a3a1a" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <path d="M116 24 C 134 6, 168 10, 172 32 C 150 44, 126 40, 116 24 Z" fill="url(#leaf)"/>
+        <path d="M120 26 C 138 24, 154 28, 166 31" stroke="#1f6b2a" stroke-width="2" fill="none" stroke-linecap="round" opacity=".7"/>
+      </svg>
+    </button>
+  </main>
+
+  <section id="shop" aria-label="Улучшения"></section>
+
+  <footer><button id="reset">Сбросить прогресс</button></footer>
+</div>
+<div id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var KEY = 'sliva-clicker-v1';
+  var OFFLINE_CAP_SEC = 2 * 60 * 60; // не больше 2 часов
+  var OFFLINE_RATE = 0.5;            // оффлайн приносит 50%
+
+  var UPGRADES = [
+    { id: 'hand',     icon: '🖐️', name: 'Крепкая рука',        desc: '+1 слива за клик',  base: 15,     click: 1, sec: 0 },
+    { id: 'gardener', icon: '🧑‍🌾', name: 'Садовник',            desc: '+1 слива в секунду', base: 50,     click: 0, sec: 1 },
+    { id: 'tree',     icon: '🌳', name: 'Сливовое дерево',     desc: '+8 слив в секунду',  base: 400,    click: 0, sec: 8 },
+    { id: 'orchard',  icon: '🏡', name: 'Сад',                 desc: '+50 слив в секунду', base: 3000,   click: 0, sec: 50 },
+    { id: 'jam',      icon: '🍯', name: 'Фабрика варенья',     desc: '+300 слив в секунду', base: 20000, click: 0, sec: 300 },
+    { id: 'corp',     icon: '🏢', name: 'Сливовая корпорация', desc: '+2000 слив в секунду', base: 150000, click: 0, sec: 2000 }
+  ];
+
+  function fresh() { return { plums: 0, total: 0, levels: {}, t: Date.now() }; }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) {
+        var s = JSON.parse(raw);
+        if (s && typeof s.plums === 'number' && isFinite(s.plums)) {
+          s.total = typeof s.total === 'number' ? s.total : s.plums;
+          s.levels = s.levels || {};
+          s.t = typeof s.t === 'number' ? s.t : Date.now();
+          return s;
+        }
+      }
+    } catch (e) {}
+    return fresh();
+  }
+
+  var state = load();
+
+  function save() {
+    state.t = Date.now();
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function lvl(id) { return state.levels[id] || 0; }
+
+  function perClick() {
+    var c = 1;
+    UPGRADES.forEach(function (u) { c += u.click * lvl(u.id); });
+    return c;
+  }
+  function perSec() {
+    var s = 0;
+    UPGRADES.forEach(function (u) { s += u.sec * lvl(u.id); });
+    return s;
+  }
+  function cost(u) { return Math.floor(u.base * Math.pow(1.15, lvl(u.id))); }
+
+  var UNITS = ['', ' тыс.', ' млн', ' млрд', ' трлн', ' квдрлн'];
+  function fmt(n) {
+    n = Math.floor(n);
+    if (n < 1000) return String(n);
+    var i = Math.min(Math.floor(Math.log10(n) / 3), UNITS.length - 1);
+    var v = n / Math.pow(1000, i);
+    var s = v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2);
+    return s.replace(/\.?0+$/, '').replace('.', ',') + UNITS[i];
+  }
+
+  // ---------- DOM ----------
+  var elCount = document.getElementById('count');
+  var elPs = document.getElementById('ps');
+  var elPlum = document.getElementById('plum');
+  var elShop = document.getElementById('shop');
+  var elToast = document.getElementById('toast');
+  var rows = {};
+
+  UPGRADES.forEach(function (u) {
+    var b = document.createElement('button');
+    b.className = 'up';
+    b.innerHTML =
+      '<div class="ic">' + u.icon + '</div>' +
+      '<div class="info"><div class="name">' + u.name + '</div><div class="desc">' + u.desc + '</div></div>' +
+      '<div class="right"><div class="cost"></div><div class="lv"></div></div>';
+    b.addEventListener('click', function () { buy(u); });
+    elShop.appendChild(b);
+    rows[u.id] = { btn: b, cost: b.querySelector('.cost'), lv: b.querySelector('.lv') };
+  });
+
+  function buy(u) {
+    var c = cost(u);
+    if (state.plums < c) return;
+    state.plums -= c;
+    state.levels[u.id] = lvl(u.id) + 1;
+    render();
+    save();
+  }
+
+  function render() {
+    elCount.textContent = fmt(state.plums);
+    elPs.textContent = fmt(perSec()) + ' в секунду · ' + fmt(perClick()) + ' за клик';
+    UPGRADES.forEach(function (u) {
+      var r = rows[u.id], c = cost(u), ok = state.plums >= c;
+      r.cost.textContent = '🍑 ' + fmt(c);
+      r.lv.textContent = 'ур. ' + lvl(u.id);
+      r.btn.disabled = !ok;
+      r.btn.classList.toggle('can', ok);
+    });
+  }
+
+  function floatText(x, y, text) {
+    var d = document.createElement('div');
+    d.className = 'float';
+    d.textContent = '+' + text;
+    d.style.left = x + 'px';
+    d.style.top = y + 'px';
+    document.body.appendChild(d);
+    setTimeout(function () { d.remove(); }, 850);
+  }
+
+  var toastTimer;
+  function toast(msg) {
+    elToast.textContent = msg;
+    elToast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { elToast.classList.remove('show'); }, 3500);
+  }
+
+  // ---------- Клик ----------
+  elPlum.addEventListener('pointerdown', function (e) {
+    var gain = perClick();
+    state.plums += gain;
+    state.total += gain;
+    var r = elPlum.getBoundingClientRect();
+    var x = e.clientX || (r.left + r.width / 2);
+    var y = e.clientY || (r.top + r.height / 2);
+    floatText(x + (Math.random() * 30 - 15), y - 20, fmt(gain));
+    elPlum.classList.add('hit');
+    setTimeout(function () { elPlum.classList.remove('hit'); }, 80);
+    render();
+  });
+  elPlum.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      elPlum.dispatchEvent(new PointerEvent('pointerdown'));
+    }
+  });
+
+  // ---------- Сброс ----------
+  document.getElementById('reset').addEventListener('click', function () {
+    if (confirm('Сбросить весь прогресс?')) {
+      state = fresh();
+      save();
+      render();
+    }
+  });
+
+  // ---------- Оффлайн-доход ----------
+  (function offline() {
+    var dt = Math.min((Date.now() - state.t) / 1000, OFFLINE_CAP_SEC);
+    var gain = dt * perSec() * OFFLINE_RATE;
+    if (dt > 30 && gain >= 1) {
+      state.plums += gain;
+      state.total += gain;
+      toast('Пока вас не было, собрано слив: ' + fmt(gain));
+    }
+  })();
+
+  // ---------- Игровой цикл ----------
+  var last = Date.now();
+  setInterval(function () {
+    var now = Date.now();
+    var dt = Math.min((now - last) / 1000, 5);
+    last = now;
+    var g = perSec() * dt;
+    if (g > 0) { state.plums += g; state.total += g; }
+    render();
+  }, 100);
+
+  setInterval(save, 5000);
+  document.addEventListener('visibilitychange', function () { if (document.hidden) save(); });
+  window.addEventListener('pagehide', save);
+
+  render();
+})();
+</script>
+</body>
+</html>

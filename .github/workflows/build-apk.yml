@@ -19,8 +19,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - uses: actions/setup-java@v4
         with:
@@ -31,26 +29,17 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      # Kussia88 кликер (текущий код)
-      - name: Build Kussia88 clicker
-        run: gradle assembleDebug --no-daemon
-
-      # Слива кликер (первая версия, из коммита 773a427), другой applicationId, чтобы ставились оба
-      - name: Build Sliva clicker
-        run: |
-          git worktree add ../plum 773a427
-          cp app/debug.keystore ../plum/app/debug.keystore
-          cp app/build.gradle ../plum/app/build.gradle
-          sed -i "s/applicationId 'com.sliva.clicker'/applicationId 'com.sliva.plum'/" ../plum/app/build.gradle
-          gradle -p ../plum assembleDebug --no-daemon
+      # Два независимых приложения (flavors) с разными applicationId
+      - name: Build APKs
+        run: gradle assembleSlivaDebug assembleKussiaDebug --no-daemon
 
       - name: Prepare site
         run: |
           mkdir -p public/apks
           cp -r site/. public/
-          cp app/build/outputs/apk/debug/app-debug.apk public/apks/kussia88-clicker.apk
-          cp ../plum/app/build/outputs/apk/debug/app-debug.apk public/apks/sliva-clicker.apk
-          python3 - <<'EOF'
+          cp app/build/outputs/apk/kussia/debug/app-kussia-debug.apk public/apks/kussia88-clicker.apk
+          cp app/build/outputs/apk/sliva/debug/app-sliva-debug.apk   public/apks/sliva-clicker.apk
+          python3 - <<'PY'
           import json, os
           p = 'public/apps.json'
           apps = json.load(open(p, encoding='utf-8'))
@@ -60,7 +49,7 @@ jobs:
                   a['size_mb'] = round(os.path.getsize(f) / 1048576, 1)
           json.dump(apps, open(p, 'w', encoding='utf-8'), ensure_ascii=False, indent=2)
           print(apps)
-          EOF
+          PY
 
       - uses: actions/upload-pages-artifact@v3
         with:

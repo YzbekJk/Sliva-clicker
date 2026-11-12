@@ -260,16 +260,19 @@
     elStage.classList.remove('playing');
   }
 
+  var playToken = 0;
+
   function playRandomClip() {
     var n = pickClip();
     var name = 'clips/m' + (n < 10 ? '0' : '') + n + '.mp4';
+    var my = ++playToken;
     playing = true;
     elVid.src = name;
     elVid.currentTime = 0;
     var p = elVid.play();
     if (p && p.then) {
-      p.then(function () { elStage.classList.add('playing'); })
-       .catch(function () { stopClip(); });
+      p.then(function () { if (my === playToken) elStage.classList.add('playing'); })
+       .catch(function () { if (my === playToken) stopClip(); });
     } else {
       elStage.classList.add('playing');
     }
@@ -286,7 +289,7 @@
     floatText(e.clientX + (Math.random() * 30 - 15), e.clientY - 20, fmt(gain));
     elStage.classList.add('hit');
     setTimeout(function () { elStage.classList.remove('hit'); }, 80);
-    if (!playing) playRandomClip();
+    playRandomClip(); // каждый клик, новый случайный мем
     render();
   });
 

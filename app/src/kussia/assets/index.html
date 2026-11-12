@@ -43,8 +43,8 @@
     position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain;
     background: var(--bg); pointer-events: none; display: block;
   }
-  #vid { visibility: hidden; }
-  #stage.playing #vid { visibility: visible; }
+  .vid { visibility: hidden; }
+  .vid.on { visibility: visible; }
   #stage.playing #idle { visibility: hidden; }
   #tip {
     position: absolute; left: 0; right: 0; bottom: 6px; text-align: center;
@@ -112,7 +112,8 @@
   <main>
     <div id="stage" role="button" aria-label="Kussia88">
       <img id="idle" src="streamer.jpg" alt="">
-      <video id="vid" playsinline webkit-playsinline preload="auto"></video>
+      <video id="v0" class="vid" playsinline webkit-playsinline preload="auto" poster="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></video>
+      <video id="v1" class="vid" playsinline webkit-playsinline preload="auto" poster="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="></video>
       <div id="tip">жми на него</div>
     </div>
   </main>
@@ -188,7 +189,8 @@
   var elCount = document.getElementById('count');
   var elPs = document.getElementById('ps');
   var elStage = document.getElementById('stage');
-  var elVid = document.getElementById('vid');
+  var vids = [document.getElementById('v0'), document.getElementById('v1')];
+  var cur = 0;
   var elShop = document.getElementById('shop');
   var elToast = document.getElementById('toast');
   var rows = {};
@@ -255,31 +257,50 @@
     return n;
   }
 
+  var playToken = 0;
+  var pending = false; // следующий клип уже грузится
+
   function stopClip() {
     playing = false;
     elStage.classList.remove('playing');
+    vids[0].classList.remove('on');
+    vids[1].classList.remove('on');
   }
 
-  var playToken = 0;
-
+  // Следующий клип грузится в скрытый плеер, а текущий доигрывает.
+  // Переключение происходит, когда новый реально пошёл, поэтому заглушек не видно.
   function playRandomClip() {
+    if (pending) return; // клики во время загрузки не сбрасывают её
+    pending = true;
     var n = pickClip();
     var name = 'clips/m' + (n < 10 ? '0' : '') + n + '.mp4';
     var my = ++playToken;
-    playing = true;
-    elVid.src = name;
-    elVid.currentTime = 0;
-    var p = elVid.play();
-    if (p && p.then) {
-      p.then(function () { if (my === playToken) elStage.classList.add('playing'); })
-       .catch(function () { if (my === playToken) stopClip(); });
-    } else {
-      elStage.classList.add('playing');
-    }
-  }
+    var old = vids[cur];
+    var nxt = vids[1 - cur];
+    var swapped = false;
 
-  elVid.addEventListener('ended', stopClip);
-  elVid.addEventListener('error', stopClip);
+    nxt.onplaying = function () {
+      if (swapped || my !== playToken) return;
+      swapped = true;
+      pending = false;
+      nxt.classList.add('on');
+      old.classList.remove('on');
+      try { old.pause(); } catch (e) {}
+      cur = 1 - cur;
+      playing = true;
+      elStage.classList.add('playing');
+    };
+    nxt.onended = function () { if (nxt === vids[cur] && my === playToken) stopClip(); };
+    nxt.onerror = function () { if (my === playToken) pending = false; if (my === playToken && !swapped && !old.classList.contains('on')) stopClip(); };
+
+    nxt.src = name;
+    var p = nxt.play();
+    if (p && p.catch) p.catch(function () {
+      if (my === playToken) pending = false;
+      if (my === playToken && !swapped && !old.classList.contains('on')) stopClip();
+    });
+    setTimeout(function () { if (my === playToken) pending = false; }, 2500); // страховка
+  }
 
   // ---------- Клик ----------
   elStage.addEventListener('pointerdown', function (e) {
@@ -325,7 +346,7 @@
 
   setInterval(save, 5000);
   document.addEventListener('visibilitychange', function () {
-    if (document.hidden) { save(); elVid.pause(); stopClip(); }
+    if (document.hidden) { save(); vids[0].pause(); vids[1].pause(); playToken++; pending = false; stopClip(); }
   });
   window.addEventListener('pagehide', save);
 

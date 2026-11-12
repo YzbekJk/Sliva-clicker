@@ -1,8 +1,10 @@
 package com.sliva.clicker;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.Window;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
@@ -28,6 +30,14 @@ public class MainActivity extends Activity {
         s.setAllowFileAccess(true);
         s.setAllowContentAccess(false);
         s.setMediaPlaybackRequiresUserGesture(false); // звук мемов
+
+        // Убираем стандартную заглушку видео (серый квадрат с кругом и треугольником)
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public Bitmap getDefaultVideoPoster() {
+                return Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+            }
+        });
 
         setContentView(webView);
 
